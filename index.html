@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Number Quiz</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#8b5cf6">
+<link rel="apple-touch-icon" href="icon-192.png">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#2d1b69;--white:#fff;--shadow:rgba(45,27,105,.45)}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%}
+body{background:linear-gradient(160deg,#35b6ff 0%,#8b5cf6 52%,#ff5fa8 100%) fixed;color:var(--white);font-family:'Fredoka','Trebuchet MS',system-ui,sans-serif;display:flex;justify-content:center;padding:16px;min-height:100vh}
+#app{width:100%;max-width:420px;text-align:center;position:relative}
+h1{font-size:40px;font-weight:700;margin:6px 0 0;text-shadow:0 4px 0 var(--shadow)}
+.rain span:nth-child(1){color:#ffe14d}.rain span:nth-child(2){color:#ffffff}.rain span:nth-child(3){color:#7dffb3}.rain span:nth-child(4){color:#ffd1e8}.rain span:nth-child(5){color:#aee6ff}.rain span:nth-child(6){color:#ffb84d}
+p{margin:6px 0 14px;font-size:18px}
+.mode{display:flex;align-items:center;gap:14px;width:100%;font:inherit;font-weight:700;font-size:24px;padding:12px 16px;margin:14px 0;border:4px solid var(--white);border-radius:24px;color:var(--white);text-align:left;box-shadow:0 7px 0 var(--shadow);cursor:pointer;text-shadow:0 2px 0 rgba(0,0,0,.2)}
+.mode .i{font-size:36px;width:56px;height:56px;border-radius:50%;background:rgba(255,255,255,.3);display:flex;align-items:center;justify-content:center;flex:none}
+.mode small{display:block;font-size:15px;font-weight:400;opacity:.95}
+.mode:active,.btn:active,.opt:active{transform:translateY(6px);box-shadow:0 1px 0 var(--shadow)}
+.m-add{background:linear-gradient(135deg,#ff9a1f,#ff5e3a)}
+.m-sub{background:linear-gradient(135deg,#17c3ff,#2f6bff)}
+.m-mul{background:linear-gradient(135deg,#c35bff,#ff4fa3)}
+.btn{display:block;width:100%;font:inherit;font-weight:700;font-size:22px;padding:13px;margin:12px 0;border:4px solid var(--white);border-radius:20px;background:#ffd23f;color:var(--ink);box-shadow:0 6px 0 var(--shadow);cursor:pointer}
+.btn.alt{background:#7dffb3}
+.top{display:flex;align-items:center;justify-content:space-between;gap:8px;font-weight:700;font-size:18px;margin:6px 52px 10px 0}
+.back{font:inherit;font-weight:700;font-size:16px;padding:6px 12px;border:3px solid var(--white);border-radius:14px;background:rgba(255,255,255,.22);color:var(--white);cursor:pointer}
+.bar{height:16px;border:3px solid var(--white);border-radius:10px;overflow:hidden;background:rgba(255,255,255,.25)}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#ffe14d,#ff9a1f);transition:width .3s}
+.qcard{background:var(--white);color:var(--ink);border-radius:26px;margin:22px 0 20px;padding:22px 10px;font-size:52px;font-weight:700;box-shadow:0 8px 0 var(--shadow)}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.opt{font:inherit;font-size:34px;font-weight:700;padding:16px 0;border:4px solid var(--white);border-radius:22px;color:var(--white);box-shadow:0 6px 0 var(--shadow);cursor:pointer;text-shadow:0 2px 0 rgba(0,0,0,.2)}
+.c0{background:#ff5d73}.c1{background:#ffa31a}.c2{background:#19b8a6}.c3{background:#7b6cff}
+.opt.ok{background:#2ecc71;animation:pop .3s}
+.opt.no{background:#555;opacity:.75}
+@keyframes pop{50%{transform:scale(1.1)}}
+@media (prefers-reduced-motion:reduce){.opt.ok{animation:none}}
+.msg{min-height:34px;font-size:24px;font-weight:700;margin-top:18px;text-shadow:0 3px 0 var(--shadow)}
+.big{font-size:70px;margin:6px 0}
+#snd{position:absolute;top:0;right:0;width:42px;height:42px;border-radius:50%;border:3px solid var(--white);background:rgba(255,255,255,.2);font-size:20px;cursor:pointer}
+</style>
+</head>
+<body>
+<div id="app"><button id="snd" onclick="toggleSound()" aria-label="Sound on or off">🔊</button><div id="view"></div></div>
+<script>
+try{Telegram.WebApp.ready();Telegram.WebApp.expand();}catch(e){}
+
+/* Colorful math-symbol background */
+(function(){
+  var items=['+','−','×','÷','=','1','2','3','5','7','9','π','%','4'];
+  var cols=['#ffe14d','#ffffff','#7dffb3','#ffd1e8','#aee6ff','#ffb84d'];
+  var pos=[[20,40],[90,28],[160,52],[50,104],[125,96],[195,124],[25,168],[95,180],[160,194],[190,30],[70,64],[130,152],[12,110],[205,190]];
+  var s="<svg xmlns='http://www.w3.org/2000/svg' width='230' height='230'>";
+  pos.forEach(function(p,i){
+    s+="<text x='"+p[0]+"' y='"+p[1]+"' font-size='"+(24+(i%3)*9)+"' font-weight='bold' font-family='sans-serif' fill='"+cols[i%cols.length]+"' fill-opacity='0.28' transform='rotate("+((i*41)%60-30)+" "+p[0]+" "+p[1]+")'>"+items[i%items.length]+"</text>";
+  });
+  s+="</svg>";
+  document.body.style.backgroundImage='url("data:image/svg+xml,'+encodeURIComponent(s)+'"),linear-gradient(160deg,#35b6ff 0%,#8b5cf6 52%,#ff5fa8 100%)';
+  document.body.style.backgroundAttachment='fixed';
+})();
+
+/* ===== Sound: all made by the browser, no files needed ===== */
+var ctx=null, soundOn=true, timer=null, step=0, noiseBuf=null;
+var STEP_MS=210;
+var bass=[130.8,110,87.3,98];
+var chords=[[261.6,329.6,392],[220,261.6,329.6],[174.6,220,261.6],[196,246.9,293.7]];
+var mel=[
+ [659,784,659,523,659,784,880,784],
+ [659,880,784,659,523,659,587,523],
+ [880,1047,880,698,880,784,698,659],
+ [587,784,988,784,1175,988,784,587]
+];
+function initAudio(){
+  if(!ctx){
+    try{ctx=new (window.AudioContext||window.webkitAudioContext)();}catch(e){return;}
+    noiseBuf=ctx.createBuffer(1,ctx.sampleRate*0.2,ctx.sampleRate);
+    var d=noiseBuf.getChannelData(0);for(var i=0;i<d.length;i++)d[i]=Math.random()*2-1;
+  }
+  if(ctx.state==='suspended')ctx.resume();
+  if(soundOn&&!timer)timer=setInterval(tick,STEP_MS);
+}
+function tone(f,t,dur,type,vol){
+  var o=ctx.createOscillator(),g=ctx.createGain();
+  o.type=type;o.frequency.value=f;
+  g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+  o.connect(g);g.connect(ctx.destination);o.start(t);o.stop(t+dur+0.02);
+}
+function kick(t){
+  var o=ctx.createOscillator(),g=ctx.createGain();
+  o.frequency.setValueAtTime(150,t);o.frequency.exponentialRampToValueAtTime(40,t+0.15);
+  g.gain.setValueAtTime(0.22,t);g.gain.exponentialRampToValueAtTime(0.0001,t+0.18);
+  o.connect(g);g.connect(ctx.destination);o.start(t);o.stop(t+0.2);
+}
+function hat(t,vol,len){
+  var s=ctx.createBufferSource(),g=ctx.createGain(),f=ctx.createBiquadFilter();
+  s.buffer=noiseBuf;f.type='highpass';f.frequency.value=7000;
+  g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(0.0001,t+len);
+  s.connect(f);f.connect(g);g.connect(ctx.destination);s.start(t);s.stop(t+len+0.02);
+}
+function tick(){
+  if(!ctx||!soundOn)return;
+  var t=ctx.currentTime+0.02;
+  var s=step%32, bar=Math.floor(s/8), i=s%8;
+  tone(mel[bar][i],t,0.22,'square',0.035);              /* melody */
+  if(i%2===0)tone(bass[bar],t,0.34,'triangle',0.11);    /* bass */
+  if(i===0||i===4)kick(t);                              /* kick */
+  if(i%2===1)hat(t,0.05,0.05);                          /* hi-hat */
+  if(i===4)hat(t,0.07,0.14);                            /* snare-ish */
+  if(i%2===0)tone(chords[bar][(i/2)%3],t,0.2,'sine',0.045); /* chord arp */
+  step++;
+}
+function toggleSound(){
+  soundOn=!soundOn;
+  document.getElementById('snd').textContent=soundOn?'🔊':'🔇';
+  if(soundOn)initAudio();
+  else if(timer){clearInterval(timer);timer=null;}
+}
+function sfx(ok){
+  if(!soundOn||!ctx)return;
+  var t=ctx.currentTime;
+  if(ok){tone(784,t,0.14,'square',0.09);tone(1047,t+0.11,0.14,'square',0.09);tone(1319,t+0.22,0.3,'square',0.09);}
+  else{tone(220,t,0.22,'sawtooth',0.09);tone(150,t+0.18,0.35,'sawtooth',0.09);}
+}
+function fanfare(){
+  if(!soundOn||!ctx)return;
+  var t=ctx.currentTime;
+  [523,659,784,1047,784,1047,1319].forEach(function(f,i){tone(f,t+i*0.12,0.28,'square',0.08);});
+}
+
+/* ===== Game ===== */
+var view=document.getElementById('view');
+var TOTAL=10, mode='add', n=0, score=0, ans=0, locked=false, used={};
+function rnd(a,b){return Math.floor(Math.random()*(b-a+1))+a}
+
+function home(){
+  var title='Number Quiz'.split('').map(function(c,i){return c===' '?' ':'<span style="color:'+['#ffe14d','#fff','#7dffb3','#ffd1e8','#aee6ff','#ffb84d'][i%6]+'">'+c+'</span>';}).join('');
+  view.innerHTML='<div class="big">🧮</div><h1>'+title+'</h1><p>Pick a game and start playing!</p>'+
+  '<button class="mode m-add" onclick="start(\'add\')"><span class="i">➕</span><div>Addition<small>Add the numbers</small></div></button>'+
+  '<button class="mode m-sub" onclick="start(\'sub\')"><span class="i">➖</span><div>Subtraction<small>How many are left?</small></div></button>'+
+  '<button class="mode m-mul" onclick="start(\'mul\')"><span class="i">✖️</span><div>Multiplication<small>Learn your tables</small></div></button>';
+}
+function start(m){initAudio();mode=m;n=0;score=0;used={};next();}
+
+function make(){
+  var a,b,t,r,tries=0;
+  do{
+    if(mode==='add'){a=rnd(1,20);b=rnd(1,20);t=a+' + '+b;r=a+b;}
+    else if(mode==='sub'){a=rnd(5,30);b=rnd(1,a);t=a+' − '+b;r=a-b;}
+    else{a=rnd(2,10);b=rnd(2,10);t=a+' × '+b;r=a*b;}
+    tries++;
+  }while(used[t]&&tries<50);
+  used[t]=1;
+  return {t:t,r:r};
+}
+
+function next(){
+  if(n>=TOTAL){return end();}
+  n++;locked=false;
+  var q=make();ans=q.r;
+  var set=[q.r];
+  while(set.length<4){var d=q.r+rnd(-6,6);if(d>=0&&set.indexOf(d)<0)set.push(d);}
+  set.sort(function(){return Math.random()-.5});
+  var h='<div class="top"><button class="back" onclick="home()">🏠 Menu</button><span>Q '+n+'/'+TOTAL+'</span><span>⭐ '+score+'</span></div>'+
+    '<div class="bar"><i style="width:'+((n-1)/TOTAL*100)+'%"></i></div>'+
+    '<div class="qcard">'+q.t+' = ?</div><div class="opts">';
+  set.forEach(function(v,i){h+='<button class="opt c'+i+'" onclick="pick(this,'+v+')">'+v+'</button>';});
+  h+='</div><div class="msg" id="msg"></div>';
+  view.innerHTML=h;
+}
+
+function pick(el,v){
+  if(locked)return;locked=true;
+  var msg=document.getElementById('msg');
+  if(v===ans){score++;el.classList.add('ok');msg.textContent='Correct! 🎉';sfx(true);}
+  else{
+    el.classList.add('no');msg.textContent='Right answer: '+ans;sfx(false);
+    document.querySelectorAll('.opt').forEach(function(b){if(+b.textContent===ans)b.classList.add('ok');});
+  }
+  setTimeout(next,1200);
+}
+
+function end(){
+  fanfare();
+  var face=score>=9?'🏆':score>=6?'😀':'💪';
+  var text=score>=9?'Awesome!':score>=6?'Great job!':'Keep trying!';
+  view.innerHTML='<div class="big">'+face+'</div><h1>'+text+'</h1><p style="font-size:24px;font-weight:600">Score: '+score+' / '+TOTAL+'</p>'+
+    '<button class="btn" onclick="start(mode)">🔁 Play again</button>'+
+    '<button class="btn alt" onclick="home()">🏠 Menu</button>';
+}
+home();
+document.addEventListener('click',function once(){initAudio();document.removeEventListener('click',once);});
+</script>
+<script>if("serviceWorker" in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){})})}</script>
+</body>
+</html>
