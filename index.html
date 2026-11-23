@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Number Quiz</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#8b5cf6">
@@ -12,11 +12,10 @@
 <style>
 :root{--ink:#2d1b69;--white:#fff;--shadow:rgba(45,27,105,.45)}
 *{box-sizing:border-box}
-html,body{margin:0;min-height:100%}
+html,body{margin:0;min-height:100%;overscroll-behavior:none;touch-action:manipulation}
 body{background:linear-gradient(160deg,#35b6ff 0%,#8b5cf6 52%,#ff5fa8 100%) fixed;color:var(--white);font-family:'Fredoka','Trebuchet MS',system-ui,sans-serif;display:flex;justify-content:center;padding:16px;min-height:100vh}
 #app{width:100%;max-width:420px;text-align:center;position:relative}
 h1{font-size:40px;font-weight:700;margin:6px 0 0;text-shadow:0 4px 0 var(--shadow)}
-.rain span:nth-child(1){color:#ffe14d}.rain span:nth-child(2){color:#ffffff}.rain span:nth-child(3){color:#7dffb3}.rain span:nth-child(4){color:#ffd1e8}.rain span:nth-child(5){color:#aee6ff}.rain span:nth-child(6){color:#ffb84d}
 p{margin:6px 0 14px;font-size:18px}
 .mode{display:flex;align-items:center;gap:14px;width:100%;font:inherit;font-weight:700;font-size:24px;padding:12px 16px;margin:14px 0;border:4px solid var(--white);border-radius:24px;color:var(--white);text-align:left;box-shadow:0 7px 0 var(--shadow);cursor:pointer;text-shadow:0 2px 0 rgba(0,0,0,.2)}
 .mode .i{font-size:36px;width:56px;height:56px;border-radius:50%;background:rgba(255,255,255,.3);display:flex;align-items:center;justify-content:center;flex:none}
@@ -29,8 +28,16 @@ p{margin:6px 0 14px;font-size:18px}
 .btn.alt{background:#7dffb3}
 .top{display:flex;align-items:center;justify-content:space-between;gap:8px;font-weight:700;font-size:18px;margin:6px 52px 10px 0}
 .back{font:inherit;font-weight:700;font-size:16px;padding:6px 12px;border:3px solid var(--white);border-radius:14px;background:rgba(255,255,255,.22);color:var(--white);cursor:pointer}
+.sub{font-weight:700;font-size:17px;margin:0 0 8px}
+.tm{display:flex;align-items:baseline;justify-content:center;gap:6px;margin:4px auto 10px;width:150px;padding:4px 0 6px;border:4px solid var(--white);border-radius:26px;background:rgba(255,255,255,.22);box-shadow:0 6px 0 var(--shadow)}
+.tm b{font-size:64px;line-height:1;font-weight:700;text-shadow:0 4px 0 var(--shadow)}
+.tm small{font-size:22px;font-weight:700}
+.tm.low{background:#ff5d73;animation:beat 1s infinite}
+@keyframes beat{50%{transform:scale(1.08)}}
+@media (prefers-reduced-motion:reduce){.tm.low{animation:none}}
 .bar{height:16px;border:3px solid var(--white);border-radius:10px;overflow:hidden;background:rgba(255,255,255,.25)}
-.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#ffe14d,#ff9a1f);transition:width .3s}
+.bar i{display:block;height:100%;width:100%;background:linear-gradient(90deg,#7dffb3,#ffe14d);transition:width 1s linear}
+.bar i.low{background:linear-gradient(90deg,#ff5d73,#ff9a1f)}
 .qcard{background:var(--white);color:var(--ink);border-radius:26px;margin:22px 0 20px;padding:22px 10px;font-size:52px;font-weight:700;box-shadow:0 8px 0 var(--shadow)}
 .opts{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .opt{font:inherit;font-size:34px;font-weight:700;padding:16px 0;border:4px solid var(--white);border-radius:22px;color:var(--white);box-shadow:0 6px 0 var(--shadow);cursor:pointer;text-shadow:0 2px 0 rgba(0,0,0,.2)}
@@ -48,6 +55,8 @@ p{margin:6px 0 14px;font-size:18px}
 <div id="app"><button id="snd" onclick="toggleSound()" aria-label="Sound on or off">🔊</button><div id="view"></div></div>
 <script>
 try{Telegram.WebApp.ready();Telegram.WebApp.expand();}catch(e){}
+document.addEventListener('touchmove',function(e){if(e.touches.length>1)e.preventDefault();},{passive:false});
+document.addEventListener('gesturestart',function(e){e.preventDefault();});
 
 /* Colorful math-symbol background */
 (function(){
@@ -105,12 +114,12 @@ function tick(){
   if(!ctx||!soundOn)return;
   var t=ctx.currentTime+0.02;
   var s=step%32, bar=Math.floor(s/8), i=s%8;
-  tone(mel[bar][i],t,0.22,'square',0.035);              /* melody */
-  if(i%2===0)tone(bass[bar],t,0.34,'triangle',0.11);    /* bass */
-  if(i===0||i===4)kick(t);                              /* kick */
-  if(i%2===1)hat(t,0.05,0.05);                          /* hi-hat */
-  if(i===4)hat(t,0.07,0.14);                            /* snare-ish */
-  if(i%2===0)tone(chords[bar][(i/2)%3],t,0.2,'sine',0.045); /* chord arp */
+  tone(mel[bar][i],t,0.22,'square',0.035);
+  if(i%2===0)tone(bass[bar],t,0.34,'triangle',0.11);
+  if(i===0||i===4)kick(t);
+  if(i%2===1)hat(t,0.05,0.05);
+  if(i===4)hat(t,0.07,0.14);
+  if(i%2===0)tone(chords[bar][(i/2)%3],t,0.2,'sine',0.045);
   step++;
 }
 function toggleSound(){
@@ -131,63 +140,112 @@ function fanfare(){
   [523,659,784,1047,784,1047,1319].forEach(function(f,i){tone(f,t+i*0.12,0.28,'square',0.08);});
 }
 
-/* ===== Game ===== */
+/* Stop the music when the app goes to the background */
+function pauseMusic(){
+  if(timer){clearInterval(timer);timer=null;}
+  try{if(ctx&&ctx.state==='running')ctx.suspend();}catch(e){}
+}
+function resumeMusic(){
+  if(ctx&&soundOn){try{ctx.resume();}catch(e){} if(!timer)timer=setInterval(tick,STEP_MS);}
+}
+document.addEventListener('visibilitychange',function(){document.hidden?pauseMusic():resumeMusic();});
+window.addEventListener('pagehide',pauseMusic);
+window.addEventListener('blur',pauseMusic);
+window.addEventListener('focus',function(){if(!document.hidden)resumeMusic();});
+
+/* ===== Game: endless questions, 30s timer, 3 lives, high score ===== */
 var view=document.getElementById('view');
-var TOTAL=10, mode='add', n=0, score=0, ans=0, locked=false, used={};
+var TIME=30, LIVES=3;
+var mode='add', n=0, score=0, lives=LIVES, ans=0, locked=false, used={}, usedCount=0;
+var tleft=TIME, qTimer=null, newBest=false;
+var best={add:0,sub:0,mul:0};
+try{var sv=JSON.parse(localStorage.getItem('nq_best')||'null');if(sv){best.add=sv.add|0;best.sub=sv.sub|0;best.mul=sv.mul|0;}}catch(e){}
+function saveBest(){try{localStorage.setItem('nq_best',JSON.stringify(best));}catch(e){}}
 function rnd(a,b){return Math.floor(Math.random()*(b-a+1))+a}
+function stopTimer(){if(qTimer){clearInterval(qTimer);qTimer=null;}}
 
 function home(){
+  stopTimer();
   var title='Number Quiz'.split('').map(function(c,i){return c===' '?' ':'<span style="color:'+['#ffe14d','#fff','#7dffb3','#ffd1e8','#aee6ff','#ffb84d'][i%6]+'">'+c+'</span>';}).join('');
   view.innerHTML='<div class="big">🧮</div><h1>'+title+'</h1><p>Pick a game and start playing!</p>'+
   '<button class="mode m-add" onclick="start(\'add\')"><span class="i">➕</span><div>Addition<small>Add the numbers</small></div></button>'+
   '<button class="mode m-sub" onclick="start(\'sub\')"><span class="i">➖</span><div>Subtraction<small>How many are left?</small></div></button>'+
   '<button class="mode m-mul" onclick="start(\'mul\')"><span class="i">✖️</span><div>Multiplication<small>Learn your tables</small></div></button>';
 }
-function start(m){initAudio();mode=m;n=0;score=0;used={};next();}
+function start(m){initAudio();mode=m;n=0;score=0;lives=LIVES;used={};usedCount=0;newBest=false;next();}
 
 function make(){
-  var a,b,t,r,tries=0;
+  var lv=Math.floor(score/5), a,b,t,r,tries=0;
+  if(usedCount>150){used={};usedCount=0;}
   do{
-    if(mode==='add'){a=rnd(1,20);b=rnd(1,20);t=a+' + '+b;r=a+b;}
-    else if(mode==='sub'){a=rnd(5,30);b=rnd(1,a);t=a+' − '+b;r=a-b;}
-    else{a=rnd(2,10);b=rnd(2,10);t=a+' × '+b;r=a*b;}
+    if(mode==='add'){a=rnd(1,20+lv*10);b=rnd(1,20+lv*10);t=a+' + '+b;r=a+b;}
+    else if(mode==='sub'){a=rnd(5,30+lv*10);b=rnd(1,a);t=a+' − '+b;r=a-b;}
+    else{a=rnd(2,10+Math.min(lv,5));b=rnd(2,10+Math.min(lv,5));t=a+' × '+b;r=a*b;}
     tries++;
   }while(used[t]&&tries<50);
-  used[t]=1;
+  used[t]=1;usedCount++;
   return {t:t,r:r};
 }
 
+function hearts(){var s='';for(var i=0;i<LIVES;i++)s+=i<lives?'❤️':'🖤';return s;}
+
 function next(){
-  if(n>=TOTAL){return end();}
-  n++;locked=false;
+  stopTimer();
+  n++;locked=false;tleft=TIME;
   var q=make();ans=q.r;
+  var spread=Math.max(6,Math.round(q.r/4));
   var set=[q.r];
-  while(set.length<4){var d=q.r+rnd(-6,6);if(d>=0&&set.indexOf(d)<0)set.push(d);}
+  while(set.length<4){var d=q.r+rnd(-spread,spread);if(d>=0&&set.indexOf(d)<0)set.push(d);}
   set.sort(function(){return Math.random()-.5});
-  var h='<div class="top"><button class="back" onclick="home()">🏠 Menu</button><span>Q '+n+'/'+TOTAL+'</span><span>⭐ '+score+'</span></div>'+
-    '<div class="bar"><i style="width:'+((n-1)/TOTAL*100)+'%"></i></div>'+
+  var h='<div class="top"><button class="back" onclick="home()">🏠 Menu</button><span>'+hearts()+'</span><span>⭐ '+score+'</span></div>'+
+    '<div class="sub">🏆 Best: '+best[mode]+'</div>'+
+    '<div class="tm" id="tm"><b id="tl">'+TIME+'</b><small>sec</small></div>'+
+    '<div class="bar"><i id="tb" style="width:100%"></i></div>'+
     '<div class="qcard">'+q.t+' = ?</div><div class="opts">';
   set.forEach(function(v,i){h+='<button class="opt c'+i+'" onclick="pick(this,'+v+')">'+v+'</button>';});
   h+='</div><div class="msg" id="msg"></div>';
   view.innerHTML=h;
+  qTimer=setInterval(function(){
+    tleft--;
+    var tl=document.getElementById('tl'),tb=document.getElementById('tb');
+    if(tl)tl.textContent=Math.max(tleft,0);
+    if(tb){tb.style.width=Math.max(tleft,0)/TIME*100+'%';if(tleft<=8)tb.className='low';}
+    var tm=document.getElementById('tm');if(tm&&tleft<=8)tm.className='tm low';
+    if(tleft<=0)timeUp();
+  },1000);
+}
+
+function showAnswer(){
+  document.querySelectorAll('.opt').forEach(function(b){if(+b.textContent===ans)b.classList.add('ok');});
+}
+function finishQ(){setTimeout(lives<=0?end:next,1200);}
+
+function timeUp(){
+  if(locked)return;locked=true;stopTimer();
+  lives--;
+  document.getElementById('msg').textContent="Time's up! Answer: "+ans;
+  showAnswer();sfx(false);finishQ();
 }
 
 function pick(el,v){
-  if(locked)return;locked=true;
+  if(locked)return;locked=true;stopTimer();
   var msg=document.getElementById('msg');
-  if(v===ans){score++;el.classList.add('ok');msg.textContent='Correct! 🎉';sfx(true);}
-  else{
-    el.classList.add('no');msg.textContent='Right answer: '+ans;sfx(false);
-    document.querySelectorAll('.opt').forEach(function(b){if(+b.textContent===ans)b.classList.add('ok');});
+  if(v===ans){
+    score++;el.classList.add('ok');msg.textContent='Correct! 🎉';sfx(true);
+    if(score>best[mode]){best[mode]=score;newBest=true;saveBest();}
+  }else{
+    lives--;el.classList.add('no');msg.textContent='Right answer: '+ans;sfx(false);showAnswer();
   }
-  setTimeout(next,1200);
+  finishQ();
 }
 
 function end(){
+  stopTimer();
   fanfare();
-  var face=score>=9?'🏆':score>=6?'😀':'💪';
-  var text=score>=9?'Awesome!':score>=6?'Great job!':'Keep trying!';
-  view.innerHTML='<div class="big">'+face+'</div><h1>'+text+'</h1><p style="font-size:24px;font-weight:600">Score: '+score+' / '+TOTAL+'</p>'+
+  var face=newBest?'🏆':score>=15?'😀':'💪';
+  var text=newBest?'New High Score!':'Game Over';
+  view.innerHTML='<div class="big">'+face+'</div><h1>'+text+'</h1>'+
+    '<p style="font-size:24px;font-weight:600">Score: '+score+'<br>🏆 Best: '+best[mode]+'</p>'+
     '<button class="btn" onclick="start(mode)">🔁 Play again</button>'+
     '<button class="btn alt" onclick="home()">🏠 Menu</button>';
 }
