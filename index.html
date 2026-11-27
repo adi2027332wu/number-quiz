@@ -269,4 +269,205 @@ document.addEventListener('click',function once(){initAudio();document.removeEve
 </script>
 <script>if("serviceWorker" in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){})})}</script>
 </body>
-</html>
+  </html>
+  /* ===== Themes (wallpapers) ===== */
+var THEMES=[
+ {id:'math',icon:'🧮',g:'linear-gradient(160deg,#35b6ff 0%,#8b5cf6 52%,#ff5fa8 100%)',e:null},
+ {id:'space',icon:'🚀',g:'linear-gradient(160deg,#0b0b3b 0%,#3a1c71 60%,#d76d77 100%)',e:['🚀','🪐','⭐','🌙','☄️','🛸','✨','🌠']},
+ {id:'sea',icon:'🐠',g:'linear-gradient(180deg,#38c6ff 0%,#1769e0 60%,#0a2f7a 100%)',e:['🐠','🐙','🐚','🫧','🐢','🐳','🦀','🐬']},
+ {id:'jungle',icon:'🦜',g:'linear-gradient(160deg,#34d399 0%,#0f8a4b 60%,#0b4d2e 100%)',e:['🦜','🐒','🌿','🦋','🌴','🐘','🦒','🐯']},
+ {id:'candy',icon:'🍭',g:'linear-gradient(160deg,#ff5fa8 0%,#ff9a5a 55%,#a855f7 100%)',e:['🍬','🍩','🍦','🍓','🍭','🧁','🍪','🍰']},
+ {id:'kerala',icon:'🥥',g:'linear-gradient(180deg,#ff9f1c 0%,#2bb673 55%,#0e7c58 100%)',e:['🥥','🛶','🐘','🌺','🌴','🍌','🥭','🦚']},
+ {id:'sports',icon:'⚽',g:'linear-gradient(160deg,#22c55e 0%,#15803d 60%,#14532d 100%)',e:['⚽','🏏','🏀','🏆','🥅','🏑','🎯','🥇']}
+];
+function applyTheme(id){
+  var t=THEMES[0],k;
+  for(k=0;k<THEMES.length;k++){if(THEMES[k].id===id)t=THEMES[k];}
+  var bg=document.getElementById('bg');
+  if(!bg){bg=document.createElement('div');bg.id='bg';document.body.insertBefore(bg,document.body.firstChild);}
+  bg.innerHTML='';
+  var img=t.g;
+  if(t.e){
+    var h='';
+    for(k=0;k<14;k++){
+      h+='<span style="left:'+((k*37+11)%90)+'%;top:'+((k*53+7)%88)+'%;font-size:'+(26+(k*9)%22)+'px;animation-duration:'+(5+(k%4)*1.5)+'s;animation-delay:-'+(k*0.7)+'s">'+t.e[k%t.e.length]+'</span>';
+    }
+    bg.innerHTML=h;
+  }else{
+    var items=['+','−','×','÷','=','1','2','3','5','7','9','π','%','4'];
+    var cols=['#ffe14d','#ffffff','#7dffb3','#ffd1e8','#aee6ff','#ffb84d'];
+    var pos=[[20,40],[90,28],[160,52],[50,104],[125,96],[195,124],[25,168],[95,180],[160,194],[190,30],[70,64],[130,152],[12,110],[205,190]];
+    var s="<svg xmlns='http://www.w3.org/2000/svg' width='230' height='230'>";
+    pos.forEach(function(p,i){
+      s+="<text x='"+p[0]+"' y='"+p[1]+"' font-size='"+(24+(i%3)*9)+"' font-weight='bold' font-family='sans-serif' fill='"+cols[i%cols.length]+"' fill-opacity='0.28' transform='rotate("+((i*41)%60-30)+" "+p[0]+" "+p[1]+")'>"+items[i%items.length]+"</text>";
+    });
+    s+="</svg>";
+    img='url("data:image/svg+xml,'+encodeURIComponent(s)+'"),'+t.g;
+  }
+  document.body.style.backgroundImage=img;
+  document.body.style.backgroundAttachment='fixed';
+}
+
+/* ===== Settings saved on the phone ===== */
+var prefs={lang:'en',time:30,music:true,sfx:true,theme:'math'};
+try{var pv=JSON.parse(localStorage.getItem('nq_prefs')||'null');if(pv){prefs.lang=pv.lang==='ml'?'ml':'en';prefs.time=[15,30,60].indexOf(pv.time)>=0?pv.time:30;prefs.music=pv.music!==false;prefs.sfx=pv.sfx!==false;if(typeof pv.theme==='string')prefs.theme=pv.theme;}}catch(e){}
+function savePrefs(){try{localStorage.setItem('nq_prefs',JSON.stringify(prefs));}catch(e){}}
+musicOn=prefs.music;sfxOn=prefs.sfx;updateSndButtons();applyTheme(prefs.theme);
+
+/* ===== Texts: English and Malayalam ===== */
+var lang=prefs.lang;
+var I18N={
+ en:{title:'Number Quiz',pick:'Pick a game and start playing!',
+  add:'Addition',addS:'Add the numbers',sub:'Subtraction',subS:'How many are left?',
+  mul:'Multiplication',mulS:'Learn your tables',div:'Division',divS:'Share equally',
+  mix:'Mixed',mixS:'All kinds of questions',menu:'🏠 Menu',best:'Best',sec:'sec',
+  congrats:'Congrats! 🎉',right:'Right answer: ',timeup:"Time's up! Answer: ",
+  streak:'Streak',timer:'Time per question',theme:'Theme',
+  lv:['Beginner','Smart','Genius','Champion'],
+  share:function(n){return 'I scored '+n+' in Number Quiz! 🏆 Try it:';}},
+ ml:{title:'നമ്പർ ക്വിസ്',pick:'ഒരു ഗെയിം തിരഞ്ഞെടുത്ത് കളി തുടങ്ങൂ!',
+  add:'കൂട്ടൽ',addS:'സംഖ്യകൾ കൂട്ടുക',sub:'കുറയ്ക്കൽ',subS:'എത്ര ബാക്കി?',
+  mul:'ഗുണനം',mulS:'ഗുണനപ്പട്ടിക പഠിക്കാം',div:'ഹരണം',divS:'തുല്യമായി പങ്കിടാം',
+  mix:'മിക്സഡ്',mixS:'എല്ലാ തരം ചോദ്യങ്ങളും',menu:'🏠 മെനു',best:'മികച്ചത്',sec:'സെക്കൻഡ്',
+  congrats:'അഭിനന്ദനങ്ങൾ! 🎉',right:'ശരിയുത്തരം: ',timeup:'സമയം കഴിഞ്ഞു! ഉത്തരം: ',
+  streak:'തുടർച്ച',timer:'ഓരോ ചോദ്യത്തിനും സമയം',theme:'തീം',
+  lv:['തുടക്കക്കാരൻ','മിടുക്കൻ','ജീനിയസ്','ചാമ്പ്യൻ'],
+  share:function(n){return 'നമ്പർ ക്വിസിൽ എനിക്ക് '+n+' സ്കോർ കിട്ടി! 🏆 ഒന്ന് കളിച്ചുനോക്കൂ:';}}
+};
+function T(k){return I18N[lang][k];}
+function toggleLang(){lang=lang==='en'?'ml':'en';prefs.lang=lang;savePrefs();home();}
+function setTheme(id){prefs.theme=id;savePrefs();applyTheme(id);home();}
+function setTime(s){TIME=s;prefs.time=s;savePrefs();home();}
+
+/* ===== Game: endless questions, timer, streak bonus, high score ===== */
+var view=document.getElementById('view');
+var TIME=prefs.time;
+var mode='add', score=0, streak=0, ans=0, locked=false, used={}, usedCount=0;
+var tleft=TIME, qTimer=null;
+var MODES=['add','sub','mul','div','mix'];
+var best={add:0,sub:0,mul:0,div:0,mix:0};
+try{var sv=JSON.parse(localStorage.getItem('nq_best')||'null');if(sv){MODES.forEach(function(m){best[m]=sv[m]|0;});}}catch(e){}
+function saveBest(){try{localStorage.setItem('nq_best',JSON.stringify(best));}catch(e){}}
+function rnd(a,b){return Math.floor(Math.random()*(b-a+1))+a}
+function stopTimer(){if(qTimer){clearInterval(qTimer);qTimer=null;}}
+
+function levelOf(){
+  var m=Math.max(best.add,best.sub,best.mul,best.div,best.mix);
+  var i=m>=50?3:m>=25?2:m>=10?1:0;
+  return ['🌱','😎','🧠','👑'][i]+' '+T('lv')[i];
+}
+function modeBtn(m,icon){
+  return '<button class="mode m-'+m+'" onclick="start(\''+m+'\')"><span class="i">'+icon+'</span><div>'+T(m)+'<small>'+T(m+'S')+'</small></div></button>';
+}
+function home(){
+  stopTimer();
+  var cols=['#ffe14d','#fff','#7dffb3','#ffd1e8','#aee6ff','#ffb84d'];
+  var title;
+  if(lang==='en'){title='Number Quiz'.split('').map(function(c,i){return c===' '?' ':'<span style="color:'+cols[i%6]+'">'+c+'</span>';}).join('');}
+  else{title=T('title').split(' ').map(function(w,i){return '<span style="color:'+cols[i*2%6]+'">'+w+'</span>';}).join(' ');}
+  var pills=[15,30,60].map(function(s){return '<button class="pill'+(s===TIME?' on':'')+'" onclick="setTime('+s+')">'+s+'</button>';}).join('');
+  var themeBtns=THEMES.map(function(t){return '<button class="th'+(t.id===prefs.theme?' on':'')+'" onclick="setTheme(\''+t.id+'\')">'+t.icon+'</button>';}).join('');
+  view.innerHTML='<button class="lang" onclick="toggleLang()">'+(lang==='en'?'മലയാളം':'EN')+'</button>'+
+    '<div class="big float">🧮</div><h1>'+title+'</h1><div class="lvl">'+levelOf()+'</div><p>'+T('pick')+'</p>'+
+    '<div class="pills"><span>⏱ '+T('timer')+'</span>'+pills+'</div>'+
+    '<div class="pills"><span>🎨 '+T('theme')+'</span></div><div class="themes">'+themeBtns+'</div>'+
+    modeBtn('add','➕')+modeBtn('sub','➖')+modeBtn('mul','✖️')+modeBtn('div','➗')+modeBtn('mix','⚡');
+}
+function start(m){initAudio();mode=m;score=0;streak=0;used={};usedCount=0;next();}
+
+function make(){
+  var lv=Math.floor(score/5), op=mode==='mix'?MODES[rnd(0,3)]:mode, a,b,t,r,tries=0;
+  if(usedCount>150){used={};usedCount=0;}
+  do{
+    if(op==='add'){a=rnd(1,20+lv*10);b=rnd(1,20+lv*10);t=a+' + '+b;r=a+b;}
+    else if(op==='sub'){a=rnd(5,30+lv*10);b=rnd(1,a);t=a+' − '+b;r=a-b;}
+    else if(op==='mul'){a=rnd(2,10+Math.min(lv,5));b=rnd(2,10+Math.min(lv,5));t=a+' × '+b;r=a*b;}
+    else{b=rnd(2,10+Math.min(lv,5));r=rnd(2,10+Math.min(lv,5));a=b*r;t=a+' ÷ '+b;}
+    tries++;
+  }while(used[t]&&tries<50);
+  used[t]=1;usedCount++;
+  return {t:t,r:r};
+}
+
+function next(){
+  stopTimer();
+  locked=false;tleft=TIME;
+  var q=make();ans=q.r;
+  var spread=Math.max(6,Math.round(q.r/4));
+  var set=[q.r];
+  while(set.length<4){var d=q.r+rnd(-spread,spread);if(d>=0&&set.indexOf(d)<0)set.push(d);}
+  set.sort(function(){return Math.random()-.5});
+  var h='<div class="top"><button class="back" onclick="home()">'+T('menu')+'</button><span>⭐ '+score+'</span><button class="back" onclick="shareScore()">📤</button></div>'+
+    '<div class="sub">🏆 '+T('best')+': '+best[mode]+(streak>=2?' &nbsp; 🔥 '+streak:'')+'</div>'+
+    '<div class="tm" id="tm"><b id="tl">'+TIME+'</b><small>'+T('sec')+'</small></div>'+
+    '<div class="bar"><i id="tb" style="width:100%"></i></div>'+
+    '<div class="qcard">'+q.t+' = ?</div><div class="opts">';
+  set.forEach(function(v,i){h+='<button class="opt c'+i+'" onclick="pick(this,'+v+')">'+v+'</button>';});
+  h+='</div><div class="msg" id="msg"></div>';
+  view.innerHTML=h;
+  var low=Math.min(8,Math.floor(TIME/3));
+  qTimer=setInterval(function(){
+    tleft--;
+    var tl=document.getElementById('tl'),tb=document.getElementById('tb'),tm=document.getElementById('tm');
+    if(tl)tl.textContent=Math.max(tleft,0);
+    if(tb){tb.style.width=Math.max(tleft,0)/TIME*100+'%';if(tleft<=low)tb.className='low';}
+    if(tm&&tleft<=low)tm.className='tm low';
+    if(tleft<=0)timeUp();
+  },1000);
+}
+
+function showAnswer(){
+  document.querySelectorAll('.opt').forEach(function(b){if(+b.textContent===ans)b.classList.add('ok');});
+}
+function finishQ(){setTimeout(next,1200);}
+
+function timeUp(){
+  if(locked)return;locked=true;stopTimer();streak=0;
+  document.getElementById('msg').textContent=T('timeup')+ans;
+  showAnswer();sfx(false);finishQ();
+}
+
+function pick(el,v){
+  if(locked)return;locked=true;stopTimer();
+  var msg=document.getElementById('msg');
+  if(v===ans){
+    score++;streak++;el.classList.add('ok');
+    var m=T('congrats');
+    if(streak%5===0){score+=2;m='🔥 '+T('streak')+' x'+streak+'! +2';fire();}
+    msg.textContent=m;sfx(true);burst(el);
+    if(score>best[mode]){best[mode]=score;saveBest();}
+  }else{
+    streak=0;el.classList.add('no');msg.textContent=T('right')+ans;sfx(false);showAnswer();
+  }
+  finishQ();
+}
+
+function fire(){
+  try{
+    if(window.matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches)return;
+    var p=document.createElement('span');
+    p.className='conf';p.textContent='🔥';
+    p.style.left='50%';p.style.top='42%';p.style.fontSize='90px';
+    document.body.appendChild(p);
+    var a=p.animate([
+      {transform:'translate(-50%,-50%) scale(.3)',opacity:0},
+      {transform:'translate(-50%,-80%) scale(1.3)',opacity:1,offset:.4},
+      {transform:'translate(-50%,-170%) scale(1)',opacity:0}
+    ],{duration:1300,easing:'ease-out'});
+    a.onfinish=function(){p.remove();};
+  }catch(e){}
+}
+
+function shareScore(){
+  var txt=T('share')(score)+' '+location.href.split('#')[0];
+  try{
+    if(navigator.share){navigator.share({text:txt}).catch(function(){});return;}
+  }catch(e){}
+  window.open('https://wa.me/?text='+encodeURIComponent(txt),'_blank');
+}
+home();
+document.addEventListener('click',function once(){initAudio();document.removeEventListener('click',once);});
+</script>
+<script>if("serviceWorker" in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){})})}</script>
+</body>
+    </html>
