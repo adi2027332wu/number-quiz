@@ -48,6 +48,10 @@ p{margin:6px 0 14px;font-size:18px}
 @media (prefers-reduced-motion:reduce){.opt.ok{animation:none}}
 .msg{min-height:34px;font-size:24px;font-weight:700;margin-top:18px;text-shadow:0 3px 0 var(--shadow)}
 .big{font-size:70px;margin:6px 0}
+.float{display:block;animation:floaty 2.2s ease-in-out infinite}
+@keyframes floaty{0%,100%{transform:translateY(0) rotate(-8deg)}50%{transform:translateY(-18px) rotate(8deg) scale(1.08)}}
+@media (prefers-reduced-motion:reduce){.float{animation:none}}
+.conf{position:fixed;pointer-events:none;z-index:50;line-height:1}
 #snd{position:absolute;top:0;right:0;width:42px;height:42px;border-radius:50%;border:3px solid var(--white);background:rgba(255,255,255,.2);font-size:20px;cursor:pointer}
 </style>
 </head>
@@ -134,6 +138,30 @@ function sfx(ok){
   if(ok){tone(784,t,0.14,'square',0.09);tone(1047,t+0.11,0.14,'square',0.09);tone(1319,t+0.22,0.3,'square',0.09);}
   else{tone(220,t,0.22,'sawtooth',0.09);tone(150,t+0.18,0.35,'sawtooth',0.09);}
 }
+function burst(el){
+  try{
+    if(window.matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches)return;
+    var r=el.getBoundingClientRect(),x=r.left+r.width/2,y=r.top+r.height/2;
+    var sym=['🌸','🌼','🎉','✨','🎊','💮','⭐','🌺'];
+    for(var i=0;i<28;i++){
+      (function(i){
+        var p=document.createElement('span');
+        p.className='conf';p.textContent=sym[i%sym.length];
+        p.style.left=x+'px';p.style.top=y+'px';
+        p.style.fontSize=(18+Math.random()*16)+'px';
+        document.body.appendChild(p);
+        var a=Math.random()*Math.PI*2,d=70+Math.random()*140;
+        var dx=Math.cos(a)*d,dy=Math.sin(a)*d-70,rot=Math.random()*540-270;
+        var anim=p.animate([
+          {transform:'translate(-50%,-50%) scale(.3) rotate(0deg)',opacity:1},
+          {transform:'translate(calc(-50% + '+dx+'px),calc(-50% + '+dy+'px)) scale(1.1) rotate('+rot+'deg)',opacity:1,offset:.55},
+          {transform:'translate(calc(-50% + '+dx*1.1+'px),calc(-50% + '+(dy+120)+'px)) scale(.8) rotate('+rot*1.5+'deg)',opacity:0}
+        ],{duration:1100+Math.random()*500,easing:'cubic-bezier(.2,.7,.3,1)'});
+        anim.onfinish=function(){p.remove();};
+      })(i);
+    }
+  }catch(e){}
+}
 function fanfare(){
   if(!soundOn||!ctx)return;
   var t=ctx.currentTime;
@@ -153,7 +181,7 @@ window.addEventListener('pagehide',pauseMusic);
 window.addEventListener('blur',pauseMusic);
 window.addEventListener('focus',function(){if(!document.hidden)resumeMusic();});
 
-/* ===== Game: endless questions, 30s timer, 3 lives, high score ===== */
+/* ===== Game: endless questions, 30s timer, high score ===== */
 var view=document.getElementById('view');
 var TIME=30, LIVES=3;
 var mode='add', n=0, score=0, lives=LIVES, ans=0, locked=false, used={}, usedCount=0;
@@ -167,7 +195,7 @@ function stopTimer(){if(qTimer){clearInterval(qTimer);qTimer=null;}}
 function home(){
   stopTimer();
   var title='Number Quiz'.split('').map(function(c,i){return c===' '?' ':'<span style="color:'+['#ffe14d','#fff','#7dffb3','#ffd1e8','#aee6ff','#ffb84d'][i%6]+'">'+c+'</span>';}).join('');
-  view.innerHTML='<div class="big">🧮</div><h1>'+title+'</h1><p>Pick a game and start playing!</p>'+
+  view.innerHTML='<div class="big float">🧮</div><h1>'+title+'</h1><p>Pick a game and start playing!</p>'+
   '<button class="mode m-add" onclick="start(\'add\')"><span class="i">➕</span><div>Addition<small>Add the numbers</small></div></button>'+
   '<button class="mode m-sub" onclick="start(\'sub\')"><span class="i">➖</span><div>Subtraction<small>How many are left?</small></div></button>'+
   '<button class="mode m-mul" onclick="start(\'mul\')"><span class="i">✖️</span><div>Multiplication<small>Learn your tables</small></div></button>';
@@ -187,8 +215,6 @@ function make(){
   return {t:t,r:r};
 }
 
-function hearts(){var s='';for(var i=0;i<LIVES;i++)s+=i<lives?'❤️':'🖤';return s;}
-
 function next(){
   stopTimer();
   n++;locked=false;tleft=TIME;
@@ -197,7 +223,7 @@ function next(){
   var set=[q.r];
   while(set.length<4){var d=q.r+rnd(-spread,spread);if(d>=0&&set.indexOf(d)<0)set.push(d);}
   set.sort(function(){return Math.random()-.5});
-  var h='<div class="top"><button class="back" onclick="home()">🏠 Menu</button><span>'+hearts()+'</span><span>⭐ '+score+'</span></div>'+
+  var h='<div class="top"><button class="back" onclick="home()">🏠 Menu</button><span>⭐ '+score+'</span></div>'+
     '<div class="sub">🏆 Best: '+best[mode]+'</div>'+
     '<div class="tm" id="tm"><b id="tl">'+TIME+'</b><small>sec</small></div>'+
     '<div class="bar"><i id="tb" style="width:100%"></i></div>'+
@@ -218,11 +244,10 @@ function next(){
 function showAnswer(){
   document.querySelectorAll('.opt').forEach(function(b){if(+b.textContent===ans)b.classList.add('ok');});
 }
-function finishQ(){setTimeout(lives<=0?end:next,1200);}
+function finishQ(){setTimeout(next,1200);}
 
 function timeUp(){
   if(locked)return;locked=true;stopTimer();
-  lives--;
   document.getElementById('msg').textContent="Time's up! Answer: "+ans;
   showAnswer();sfx(false);finishQ();
 }
@@ -231,24 +256,14 @@ function pick(el,v){
   if(locked)return;locked=true;stopTimer();
   var msg=document.getElementById('msg');
   if(v===ans){
-    score++;el.classList.add('ok');msg.textContent='Correct! 🎉';sfx(true);
+    score++;el.classList.add('ok');msg.textContent='Congrats! 🎉';sfx(true);burst(el);
     if(score>best[mode]){best[mode]=score;newBest=true;saveBest();}
   }else{
-    lives--;el.classList.add('no');msg.textContent='Right answer: '+ans;sfx(false);showAnswer();
+    el.classList.add('no');msg.textContent='Right answer: '+ans;sfx(false);showAnswer();
   }
   finishQ();
 }
 
-function end(){
-  stopTimer();
-  fanfare();
-  var face=newBest?'🏆':score>=15?'😀':'💪';
-  var text=newBest?'New High Score!':'Game Over';
-  view.innerHTML='<div class="big">'+face+'</div><h1>'+text+'</h1>'+
-    '<p style="font-size:24px;font-weight:600">Score: '+score+'<br>🏆 Best: '+best[mode]+'</p>'+
-    '<button class="btn" onclick="start(mode)">🔁 Play again</button>'+
-    '<button class="btn alt" onclick="home()">🏠 Menu</button>';
-}
 home();
 document.addEventListener('click',function once(){initAudio();document.removeEventListener('click',once);});
 </script>
